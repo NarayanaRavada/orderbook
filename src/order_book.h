@@ -26,7 +26,7 @@ private:
 public:
 
   // add market order
-  void addOrder(Order& order);
+  void addOrder(Order order);
   bool cancelOrder(int order_id);
 
   std::pair<double, double> getBestPrices() const;
@@ -35,4 +35,7 @@ public:
 
   size_t getTotalOrders() const;
   size_t getTotalTrades() const;
+
+  // printing
+  void printOrderBook(int depth) const;
 };
