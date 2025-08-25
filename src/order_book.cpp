@@ -10,8 +10,8 @@ std::vector<Trade> OrderBook::tryMatch(Order& order) {
   std::vector<Trade> trades;
 
   auto matchOrderAgainstBook = [&order, &trades, this] (auto& priceLevels) {
-    auto isBuy = order.isBuyOrder();
-    auto priceCmp = isBuy
+    auto side = order.getSide();
+    auto priceCmp = side == Side::Buy
       ? [] (double a, double b) { return a >= b; }
       : [] (double a, double b) { return a <= b; };
 
@@ -26,10 +26,12 @@ std::vector<Trade> OrderBook::tryMatch(Order& order) {
 
         int tradeQuantity = std::min(order.getRemainingQuantity(), bookOrder.getRemainingQuantity());
 
-        if (isBuy) {
-          trades.emplace_back(order.getId(), bookOrder.getId(), price, tradeQuantity);
-        } else {
-          trades.emplace_back(bookOrder.getId(), order.getId(), price, tradeQuantity);
+        switch (side) {
+          case Side::Buy:
+            trades.emplace_back(order.getId(), bookOrder.getId(), price, tradeQuantity);
+            break;
+          case Side::Sell:
+            trades.emplace_back(bookOrder.getId(), order.getId(), price, tradeQuantity);
         }
 
         order.fill(tradeQuantity);
@@ -49,11 +51,13 @@ std::vector<Trade> OrderBook::tryMatch(Order& order) {
     }
   };
 
-
-  if (order.isBuyOrder()) {
-    matchOrderAgainstBook(asks);
-  } else {
-    matchOrderAgainstBook(bids);
+  switch (order.getSide()) {
+    case Side::Sell:
+      matchOrderAgainstBook(asks);
+      break;
+    case Side::Buy:
+      matchOrderAgainstBook(bids);
+      break;
   }
 
   return trades;
@@ -67,10 +71,13 @@ void OrderBook::addOrder(Order order) {
   if (!order.isFilled()) {
     orders.emplace(order.getId(), order);
 
-    if (order.isBuyOrder()) {
-      bids[order.getPrice()].push(order);
-    } else {
-      asks[order.getPrice()].push(order);
+    switch (order.getSide()) {
+      case Side::Buy:
+        bids[order.getPrice()].push(order);
+        break;
+      case Side::Sell:
+        asks[order.getPrice()].push(order);
+        break;
     }
   }
 }
@@ -114,11 +121,14 @@ bool OrderBook::cancelOrder(int orderId) {
     return true;
   };
 
-  if (orderToCancel.isBuyOrder()) {
-    return deleteFromPriceLevel(bids);
-  } else {
-    return deleteFromPriceLevel(asks);
+  switch (orderToCancel.getSide()) {
+    case Side::Buy:
+      return deleteFromPriceLevel(bids);
+    case Side::Sell:
+      return deleteFromPriceLevel(asks);
   }
+
+  return false;
 }
 
 std::pair<double, double> OrderBook::getBestPrices() const {

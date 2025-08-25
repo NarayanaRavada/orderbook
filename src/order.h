@@ -2,22 +2,33 @@
 
 #include <chrono>
 
+enum class Side {
+  Buy,
+  Sell
+};
+
+enum class OrderType {
+  LIMIT,
+  MARKTET,
+};
+
 struct Order {
 private:
   int id_;
   double price_;
   int initialQuantity_;
   int remainingQuantity_;
-  bool isBuy_;
+  Side side_;
+  OrderType type_;
   long timestamp_;
 
 public:
-  Order(int id, double price, int quantity, bool isBuy)
+  Order(int id, double price, int quantity, Side side)
     : id_(id)
     , price_(price)
     , initialQuantity_(quantity)
     , remainingQuantity_(quantity)
-    , isBuy_(isBuy)
+    , side_(side)
   {
     timestamp_ = std::chrono::duration_cast<std::chrono::milliseconds>(
       std::chrono::system_clock::now().time_since_epoch()
@@ -28,7 +39,7 @@ public:
   double getPrice() const { return price_; }
   int getInitialQuantity() const { return initialQuantity_; }
   int getRemainingQuantity() const { return remainingQuantity_; }
-  bool isBuyOrder() const { return isBuy_; }
+  Side getSide() const { return side_; }
   long getTimestamp() const { return timestamp_; }
 
   bool isFilled() const { return remainingQuantity_ == 0; }

@@ -1,3 +1,4 @@
+#include "order.h"
 #include "order_book.h"
 #include <iostream>
 #include <thread>
@@ -7,16 +8,16 @@ void runDemo(OrderBook& book) {
 
   // Add some sample orders
   std::vector<Order> demo_orders = {
-    {1, 100.50, 10, true},   // Buy 10 @ $100.50
-    {2, 100.25, 15, true},   // Buy 15 @ $100.25
-    {3, 101.00, 8, false},   // Sell 8 @ $101.00
-    {4, 101.25, 12, false},  // Sell 12 @ $101.25
-    {5, 100.75, 20, true},   // Buy 20 @ $100.75
+    {1, 100.50, 10, Side::Buy},   // Buy 10 @ $100.50
+    {2, 100.25, 15, Side::Buy},   // Buy 15 @ $100.25
+    {3, 101.00, 8, Side::Sell},   // Sell 8 @ $101.00
+    {4, 101.25, 12, Side::Sell},  // Sell 12 @ $101.25
+    {5, 100.75, 20, Side::Buy},   // Buy 20 @ $100.75
   };
 
   for (auto& order : demo_orders) {
     std::cout << "\nAdding order " << order.getId() << ": "
-      << (order.isBuyOrder() ? "BUY" : "SELL") << " "
+      << (order.getSide() == Side::Buy ? "BUY" : "SELL") << " "
       << order.getInitialQuantity() << " @ $" << order.getPrice() << "\n";
 
     book.addOrder(order);

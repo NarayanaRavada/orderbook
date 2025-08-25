@@ -11,8 +11,8 @@ void test_basic_operations() {
   OrderBook book;
 
   // Create orders using your Order constructor
-  Order buy_order(1, 100.0, 10, true);   // Buy 10 @ $100
-  Order sell_order(2, 101.0, 15, false); // Sell 15 @ $101
+  Order buy_order(1, 100.0, 10, Side::Buy);   // Buy 10 @ $100
+  Order sell_order(2, 101.0, 15, Side::Sell); // Sell 15 @ $101
 
   book.addOrder(buy_order);
   book.addOrder(sell_order);
@@ -42,13 +42,13 @@ void test_order_matching() {
   OrderBook book;
 
   // Add some orders that shouldn't match
-  book.addOrder({1, 100.0, 10, true});   // Buy 10 @ $100
-  book.addOrder({2, 101.0, 15, false});  // Sell 15 @ $101
+  book.addOrder({1, 100.0, 10, Side::Buy});   // Buy 10 @ $100
+  book.addOrder({2, 101.0, 15, Side::Sell});  // Sell 15 @ $101
 
   assert(book.getTotalTrades() == 0);  // No trades yet
 
   // Add a buy order that should match
-  book.addOrder({3, 101.0, 8, true});   // Buy 8 @ $101 (matches sell order)
+  book.addOrder({3, 101.0, 8, Side::Buy});   // Buy 8 @ $101 (matches sell order)
 
   assert(book.getTotalTrades() == 1);  // One trade should have occurred
 
@@ -65,11 +65,11 @@ void test_price_time_priority() {
   OrderBook book;
 
   // Add multiple orders at same price
-  book.addOrder({1, 100.0, 10, true});   // First buy order
-  book.addOrder({2, 100.0, 15, true});   // Second buy order at same price
+  book.addOrder({1, 100.0, 10, Side::Buy});   // First buy order
+  book.addOrder({2, 100.0, 15, Side::Buy});   // Second buy order at same price
 
   // Add sell order that should match with first order (time priority)
-  book.addOrder({3, 100.0, 5, false});   // Sell 5 @ $100
+  book.addOrder({3, 100.0, 5, Side::Sell});   // Sell 5 @ $100
 
   assert(book.getTotalTrades() == 1);
 
@@ -93,7 +93,7 @@ void benchmark_performance(int num_orders) {
   orders.reserve(num_orders);
 
   for (int i = 0; i < num_orders; ++i) {
-    orders.emplace_back(i, price_dist(gen), qty_dist(gen), side_dist(gen));
+    orders.emplace_back(i, price_dist(gen), qty_dist(gen), side_dist(gen) ? Side::Sell : Side::Buy);
   }
 
   // Warm up the CPU cache
@@ -147,7 +147,7 @@ void realistic_benchmark(int num_orders) {
 
   for (int i = 0; i < num_orders; ++i) {
     // Generate order inside loop to prevent optimization
-    Order order(i, price_dist(gen), qty_dist(gen), side_dist(gen));
+    Order order(i, price_dist(gen), qty_dist(gen), side_dist(gen) ? Side::Buy : Side::Sell);
 
     book.addOrder(order);
 
@@ -171,7 +171,7 @@ void ultra_realistic_benchmark(int num_orders) {
 
     // Add initial market data to make it realistic
     for (int i = 0; i < 50; ++i) {
-        book.addOrder(Order(i, 100.0 + i * 0.1, 100, i % 2 == 0));
+        book.addOrder(Order(i, 100.0 + i * 0.1, 100, i % 2 == 0 ? Side::Buy : Side::Sell));
     }
 
     std::random_device rd;
@@ -192,7 +192,7 @@ void ultra_realistic_benchmark(int num_orders) {
             book.cancelOrder(i - 50);  // Cancel older order
         } else {
             // 90% add operations
-            Order order(i + 1000, price_dist(gen), qty_dist(gen), side_dist(gen));
+            Order order(i + 1000, price_dist(gen), qty_dist(gen), side_dist(gen) ? Side::Buy : Side::Sell);
             book.addOrder(order);
         }
 
